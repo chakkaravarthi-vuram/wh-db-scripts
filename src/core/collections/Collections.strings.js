@@ -28,6 +28,7 @@ const COLLECTIONS = {
     SCHEDULER_LOG: "scheduler_log",
     TASK_METADATA: "task_metadata",
     FLOW_TRACKER: "flow_tracker",
+    AGGREGATE_REPORT_METADATA: "aggregate_report_metadata",
   },
   WORKHALL_DOCUMENT_ENGINE: {
     DOCUMENT_LOG: "document_log",

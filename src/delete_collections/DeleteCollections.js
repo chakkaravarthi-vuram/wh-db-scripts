@@ -12,6 +12,7 @@ const objUuids = {
     "dcb8fc3a-a614-4f41-81a2-1a8c10b7a782",
   ],
   arrFlowUuids: ["0e2cb1ba-6635-43a2-be82-8d9c7e1bb031"],
+  arrReportUuids: ["b2a09537-2175-4ad8-bed8-ab38f5aed6dc"],
 };
 
 const objIdsAndTechRefName = {
@@ -336,6 +337,12 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many document_metadata
   await deleteMany(db, PRIMARY.DOCUMENT_METADATA, documentQuery);
+
+  // Delete Many aggregate_report_metadata
+  const aggregateReportMetadataQuery = {
+    report_uuid: { $nin: objUuids.arrReportUuids },
+  };
+  await deleteMany(db, PRIMARY.AGGREGATE_REPORT_METADATA, aggregateReportMetadataQuery);
 };
 
 const deleteCollectionDataFromWorkhallDocumentEngineDB = async (client) => {
