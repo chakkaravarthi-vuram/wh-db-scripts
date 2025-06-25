@@ -5,9 +5,11 @@ import utils from "lodash";
 
 // We have to put the all UUID's
 const objUuids = {
-  arrDataListUuids: ['407461af-611b-4dfd-a748-bab24d679030', 'dcb8fc3a-a614-4f41-81a2-1a8c10b7a782'],
-  arrFlowUuids: ['0e2cb1ba-6635-43a2-be82-8d9c7e1bb031'],
-  arrTaskMetadataUuids: [],
+  arrDataListUuids: [
+    "407461af-611b-4dfd-a748-bab24d679030",
+    "dcb8fc3a-a614-4f41-81a2-1a8c10b7a782",
+  ],
+  arrFlowUuids: ["0e2cb1ba-6635-43a2-be82-8d9c7e1bb031"],
 };
 
 const objIdsAndTechRefName = {
@@ -16,7 +18,7 @@ const objIdsAndTechRefName = {
   arrInstanceIds: [],
   arrJobIds: [],
   arrTaskIds: [],
-  arrDocumentIds: [],
+  arrDashboardIds: [],
   arrTechnicalReferenceNames: [],
 };
 
@@ -95,6 +97,23 @@ const getInstanceMetadataList = async (db, query) => {
   return dbCollectionInstanceMetadataData;
 };
 
+const getDashboardIds = (dashboardMetadata) => {
+  dashboardMetadata.forEach((objDashboardMetadata) => {
+    const { _id } = objDashboardMetadata;
+    objIdsAndTechRefName.arrDashboardIds.push(_id);
+  });
+};
+
+const getDashboardMetadataList = async (db, query) => {
+  const dbCollectionDashboardMetadata = await db.collection(
+    COLLECTIONS.DASHBOARD_METADATA
+  );
+  const dbCollectionDashboardMetadataData = await dbCollectionDashboardMetadata
+    .find(query)
+    .toArray();
+  return dbCollectionDashboardMetadataData;
+};
+
 const getSchedulerLogList = async (db, schedulerQuery) => {
   const dbCollectionSchedulerLog = await db.collection(
     COLLECTIONS.SCHEDULER_LOG
@@ -136,7 +155,7 @@ const deleteCollectionsFromObjIdsAndTechRefName = async (db) => {
     async (collectionName) => {
       const dbCollectionData = await dropCollection(db, collectionName);
       if (dbCollectionData) {
-        console.log(`${collectionName} collection deleted`);
+        console.log("collection dropped -> ", collectionName);
       }
     }
   );
@@ -167,17 +186,20 @@ const deleteCollectionsData = async (db) => {
   const instanceMetadata = await getInstanceMetadataList(db);
   await getInstanceIds(instanceMetadata);
 
+  // dashboard_metadata
+  const dashboardMetadata = await getDashboardMetadataList(db);
+  await getDashboardIds(dashboardMetadata);
+
   const query = {
-    $or: [
+    $and: [
       { data_list_uuid: { $nin: objUuids.arrDataListUuids } },
       { flow_uuid: { $nin: objUuids.arrFlowUuids } },
-      { task_metadata_uuid: { $nin: objUuids.arrTaskMetadataUuids } },
     ],
   };
   let docUuids = [];
   docUuids.push(objUuids.arrDataListUuids);
   docUuids.push(objUuids.arrFlowUuids);
-  docUuids.push(objUuids.arrTaskMetadataUuids);
+  // docUuids.push(objUuids.arrTaskMetadataUuids);
   docUuids = docUuids.flat(Infinity);
 
   // Delete collections
@@ -197,6 +219,18 @@ const deleteCollectionsData = async (db) => {
   // Delete Many instance
   await deleteMany(db, COLLECTIONS.INSTANCES, query);
 
+  // Delete Many dashboard_metadata
+  await deleteMany(db, COLLECTIONS.DASHBOARD_METADATA, query);
+
+  // Delete Many dashboard_pages
+  const dashboardPagesQuery = {
+    dashboard_id: { $in: objIdsAndTechRefName.arrDashboardIds },
+  };
+  await deleteMany(db, COLLECTIONS.DASHBOARD_PAGES, dashboardPagesQuery);
+
+  // Delete Many dashboard_components
+  await deleteMany(db, COLLECTIONS.DASHBOARD_COMPONENTS, dashboardPagesQuery);
+
   // Delete Many active_tasks
   await deleteMany(db, COLLECTIONS.ACTIVE_TASKS, query);
 
@@ -213,14 +247,14 @@ const deleteCollectionsData = async (db) => {
   await deleteMany(db, COLLECTIONS.TASK_LOG, query);
 
   const schedulerQuery = {
-    $or: [
-      {
-        "schedule_data.instance_id": {
-          $in: objIdsAndTechRefName.arrInstanceIds,
-        },
-      },
+    $and: [
       { "schedule_data.flow_uuid": { $nin: objUuids.arrFlowUuids } },
       { "schedule_data.data_list_uuid": { $nin: objUuids.arrDataListUuids } },
+      // {
+      //   "schedule_data.instance_id": {
+      //     $in: objIdsAndTechRefName.arrInstanceIds,
+      //   },
+      // },
     ],
   };
 
@@ -249,7 +283,7 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many auto_sequence
   const autoSequenceQuery = {
-    $or: [{ identifier: { $nin: docUuids } }],
+    $and: [{ identifier: { $nin: docUuids } }],
   };
   await deleteMany(db, COLLECTIONS.AUTO_SEQUENCE, autoSequenceQuery);
 
@@ -283,9 +317,9 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many documentQuery
   const documentQuery = {
-    $or: [
+    $and: [
       { entity_uuid: { $nin: docUuids } },
-      { entity_id: { $in: objIdsAndTechRefName.arrTaskIds } },
+      // { entity_id: { $in: objIdsAndTechRefName.arrTaskIds } },
     ],
   };
 
