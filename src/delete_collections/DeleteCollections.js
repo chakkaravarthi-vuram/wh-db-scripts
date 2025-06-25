@@ -3,6 +3,8 @@ import { COLLECTIONS } from "../core/collections/Collections.strings.js";
 import { BACKEND_DB } from "../core/backend_db/BackendDB.strings.js";
 import utils from "lodash";
 
+const { PRIMARY, WORKHALL_DOCUMENT_ENGINE, SCHEDULER } = COLLECTIONS;
+
 // We have to put the all UUID's
 const objUuids = {
   arrDataListUuids: [
@@ -17,6 +19,7 @@ const objIdsAndTechRefName = {
   arrDatalistIds: [],
   arrInstanceIds: [],
   arrJobIds: [],
+  arrDocumentIds: [],
   arrTaskIds: [],
   arrDashboardIds: [],
   arrTechnicalReferenceNames: [],
@@ -40,7 +43,7 @@ const getDatalistIdAndTechnicalReferenceNameListFromDatalist = (datalist) => {
 };
 
 const getDatalist = async (db) => {
-  const dbCollectionDatalist = await db.collection(COLLECTIONS.DATA_LIST);
+  const dbCollectionDatalist = await db.collection(PRIMARY.DATA_LIST);
   const dbCollectionDatalistData = await dbCollectionDatalist
     .find({
       data_list_uuid: { $nin: objUuids.arrDataListUuids },
@@ -70,7 +73,7 @@ const getFlowIdAndTechnicalReferenceNameListFromFlowMetaData = (
 
 const getFlowMetaDataList = async (db) => {
   const dbCollectionFlowMetaData = await db.collection(
-    COLLECTIONS.FLOW_METADATA
+    PRIMARY.FLOW_METADATA
   );
   const dbCollectionFlowMetaDataData = await dbCollectionFlowMetaData
     .find({
@@ -89,7 +92,7 @@ const getInstanceIds = (instanceMetaData) => {
 
 const getInstanceMetadataList = async (db, query) => {
   const dbCollectionInstanceMetadata = await db.collection(
-    COLLECTIONS.INSTANCES
+    PRIMARY.INSTANCES
   );
   const dbCollectionInstanceMetadataData = await dbCollectionInstanceMetadata
     .find(query)
@@ -100,13 +103,15 @@ const getInstanceMetadataList = async (db, query) => {
 const getDashboardIds = (dashboardMetadata) => {
   dashboardMetadata.forEach((objDashboardMetadata) => {
     const { _id } = objDashboardMetadata;
-    objIdsAndTechRefName.arrDashboardIds.push(_id);
+    if (!utils.includes(objIdsAndTechRefName.arrDashboardIds, _id)) {
+      objIdsAndTechRefName.arrDashboardIds.push(_id);
+    }
   });
 };
 
 const getDashboardMetadataList = async (db, query) => {
   const dbCollectionDashboardMetadata = await db.collection(
-    COLLECTIONS.DASHBOARD_METADATA
+    PRIMARY.DASHBOARD_METADATA
   );
   const dbCollectionDashboardMetadataData = await dbCollectionDashboardMetadata
     .find(query)
@@ -116,7 +121,7 @@ const getDashboardMetadataList = async (db, query) => {
 
 const getSchedulerLogList = async (db, schedulerQuery) => {
   const dbCollectionSchedulerLog = await db.collection(
-    COLLECTIONS.SCHEDULER_LOG
+    PRIMARY.SCHEDULER_LOG
   );
   const dbCollectionSchedulerLogData = await dbCollectionSchedulerLog
     .find(schedulerQuery)
@@ -126,7 +131,7 @@ const getSchedulerLogList = async (db, schedulerQuery) => {
 
 const getTaskMetaDataList = async (db, query) => {
   const dbCollectionTaskMetadata = await db.collection(
-    COLLECTIONS.TASK_METADATA
+    PRIMARY.TASK_METADATA
   );
   const dbCollectionTaskMetadataData = await dbCollectionTaskMetadata
     .find(query)
@@ -136,7 +141,7 @@ const getTaskMetaDataList = async (db, query) => {
 
 const getDocumentMetadataList = async (db, documentQuery) => {
   const dbCollectionDocumentMetadata = await db.collection(
-    COLLECTIONS.DOCUMENT_METADATA
+    PRIMARY.DOCUMENT_METADATA
   );
   const dbCollectionDocumentMetadataData = await dbCollectionDocumentMetadata
     .find(documentQuery)
@@ -208,43 +213,43 @@ const deleteCollectionsData = async (db) => {
   // Delete Many //
 
   // Delete Many action_history
-  await deleteMany(db, COLLECTIONS.ACTION_HISTORY, query);
+  await deleteMany(db, PRIMARY.ACTION_HISTORY, query);
 
   // Delete Many field_master
   const fieldMasterQuery = {
     context_uuid: { $nin: docUuids },
   };
-  await deleteMany(db, COLLECTIONS.FIELD_MASTER, fieldMasterQuery);
+  await deleteMany(db, PRIMARY.FIELD_MASTER, fieldMasterQuery);
 
   // Delete Many instance
-  await deleteMany(db, COLLECTIONS.INSTANCES, query);
+  await deleteMany(db, PRIMARY.INSTANCES, query);
 
   // Delete Many dashboard_metadata
-  await deleteMany(db, COLLECTIONS.DASHBOARD_METADATA, query);
+  await deleteMany(db, PRIMARY.DASHBOARD_METADATA, query);
 
   // Delete Many dashboard_pages
   const dashboardPagesQuery = {
     dashboard_id: { $in: objIdsAndTechRefName.arrDashboardIds },
   };
-  await deleteMany(db, COLLECTIONS.DASHBOARD_PAGES, dashboardPagesQuery);
+  await deleteMany(db, PRIMARY.DASHBOARD_PAGES, dashboardPagesQuery);
 
   // Delete Many dashboard_components
-  await deleteMany(db, COLLECTIONS.DASHBOARD_COMPONENTS, dashboardPagesQuery);
+  await deleteMany(db, PRIMARY.DASHBOARD_COMPONENTS, dashboardPagesQuery);
 
   // Delete Many active_tasks
-  await deleteMany(db, COLLECTIONS.ACTIVE_TASKS, query);
+  await deleteMany(db, PRIMARY.ACTIVE_TASKS, query);
 
   // Delete Many field_metadata
-  await deleteMany(db, COLLECTIONS.FIELD_METADATA, query);
+  await deleteMany(db, PRIMARY.FIELD_METADATA, query);
 
   // Delete Many active_task_details
-  const activeTaskDetailsQuery = {
-    instance_id: { $in: objIdsAndTechRefName.arrInstanceIds },
-  };
-  await deleteMany(db, COLLECTIONS.ACTIVE_TASK_DETAILS, activeTaskDetailsQuery);
+  // const activeTaskDetailsQuery = {
+  //   instance_id: { $in: objIdsAndTechRefName.arrInstanceIds },
+  // };
+  // await deleteMany(db, PRIMARY.ACTIVE_TASK_DETAILS, activeTaskDetailsQuery);
 
   // Delete Many task_log
-  await deleteMany(db, COLLECTIONS.TASK_LOG, query);
+  await deleteMany(db, PRIMARY.TASK_LOG, query);
 
   const schedulerQuery = {
     $and: [
@@ -267,31 +272,31 @@ const deleteCollectionsData = async (db) => {
   objIdsAndTechRefName.arrTaskIds = taskMetadataList.map((item) => item._id);
 
   // Delete Many scheduler_log
-  await deleteMany(db, COLLECTIONS.SCHEDULER_LOG, schedulerQuery);
+  await deleteMany(db, PRIMARY.SCHEDULER_LOG, schedulerQuery);
 
   // Delete Many data_access_log
   const dataAccessLogQuery = {
     data_access_log_uuid: { $nin: docUuids },
   };
-  await deleteMany(db, COLLECTIONS.DATA_ACCESS_LOG, dataAccessLogQuery);
+  await deleteMany(db, PRIMARY.DATA_ACCESS_LOG, dataAccessLogQuery);
 
   // Delete Many task_owner_log
-  await deleteMany(db, COLLECTIONS.TASK_OWNER_LOG, query);
+  await deleteMany(db, PRIMARY.TASK_OWNER_LOG, query);
 
   // Delete Many flow_steps
-  await deleteMany(db, COLLECTIONS.FLOW_STEPS, query);
+  await deleteMany(db, PRIMARY.FLOW_STEPS, query);
 
   // Delete Many auto_sequence
   const autoSequenceQuery = {
     $and: [{ identifier: { $nin: docUuids } }],
   };
-  await deleteMany(db, COLLECTIONS.AUTO_SEQUENCE, autoSequenceQuery);
+  await deleteMany(db, PRIMARY.AUTO_SEQUENCE, autoSequenceQuery);
 
   // Delete Many flow_metadata
-  await deleteMany(db, COLLECTIONS.FLOW_METADATA, query);
+  await deleteMany(db, PRIMARY.FLOW_METADATA, query);
 
   // Delete Many data_list
-  await deleteMany(db, COLLECTIONS.DATA_LIST, query);
+  await deleteMany(db, PRIMARY.DATA_LIST, query);
 
   // Delete Many rule_metadata
   const ruleMetaDataQuery = {
@@ -301,7 +306,7 @@ const deleteCollectionsData = async (db) => {
       { task_metadata_id: { $in: objIdsAndTechRefName.arrTaskIds } },
     ],
   };
-  await deleteMany(db, COLLECTIONS.RULE_METADATA, ruleMetaDataQuery);
+  await deleteMany(db, PRIMARY.RULE_METADATA, ruleMetaDataQuery);
 
   // Delete Many trigger_metadata
   const triggerMetaDataQuery = {
@@ -310,10 +315,10 @@ const deleteCollectionsData = async (db) => {
       { flow_id: { $in: objIdsAndTechRefName.arrFlowIds } },
     ],
   };
-  await deleteMany(db, COLLECTIONS.TRIGGER_METADATA, triggerMetaDataQuery);
+  await deleteMany(db, PRIMARY.TRIGGER_METADATA, triggerMetaDataQuery);
 
   // Delete Many task_metadata
-  await deleteMany(db, COLLECTIONS.TASK_METADATA, query);
+  // await deleteMany(db, PRIMARY.TASK_METADATA, query);
 
   // Delete Many documentQuery
   const documentQuery = {
@@ -330,10 +335,32 @@ const deleteCollectionsData = async (db) => {
   );
 
   // Delete Many document_metadata
-  await deleteMany(db, COLLECTIONS.DOCUMENT_METADATA, documentQuery);
-
-  return true;
+  await deleteMany(db, PRIMARY.DOCUMENT_METADATA, documentQuery);
 };
+
+const deleteCollectionDataFromWorkhallDocumentEngineDB = async (client) => {
+  const dbWHDocumentEngine = await getDB(client, BACKEND_DB.WORKHALL_DOCUMENT_ENGINE);
+
+  // Delete Many document_log
+  const documentLogQuery = {
+    document_id: { $in: objIdsAndTechRefName.arrDocumentIds },
+  };
+  await deleteMany(dbWHDocumentEngine, WORKHALL_DOCUMENT_ENGINE.DOCUMENT_LOG, documentLogQuery);
+}
+
+const deleteCollectionDataFromSchedulerDB = async (client) => {
+  const dbScheduler = await getDB(client, BACKEND_DB.SCHEDULER);
+
+  const query = {
+    job_id: { $in: objIdsAndTechRefName.arrJobIds },
+  };
+
+  // Delete Many scheduler_audit
+  await deleteMany(dbScheduler, SCHEDULER.SCHEDULER_AUDIT, query);
+
+  // Delete Many recursive_jobs
+  await deleteMany(dbScheduler, SCHEDULER.RECURSIVE_JOBS, query);
+}
 
 const deleteCollections = async () => {
   try {
@@ -341,6 +368,9 @@ const deleteCollections = async () => {
 
     const db = await getDB(client, BACKEND_DB.NIRVANA);
     await deleteCollectionsData(db);
+
+    await deleteCollectionDataFromWorkhallDocumentEngineDB(client);
+    await deleteCollectionDataFromSchedulerDB(client);
 
     await closeClient(client);
   } catch (error) {
