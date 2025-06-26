@@ -2,8 +2,12 @@ import { closeClient, getClient, getDB } from "../core/Client.js";
 import { COLLECTIONS } from "../core/collections/Collections.strings.js";
 import { BACKEND_DB } from "../core/backend_db/BackendDB.strings.js";
 import utils from "lodash";
+import { s3Utils } from "../core/aws/S3Utils.js";
 
 const { PRIMARY, WORKHALL_DOCUMENT_ENGINE, SCHEDULER } = COLLECTIONS;
+
+const devDmsBucketName = 'wh-dev-dms';
+// const testDmsBucketName = 'wh-test-dms';
 
 // We have to put the all UUID's
 const objUuids = {
@@ -23,6 +27,7 @@ const objIdsAndTechRefName = {
   arrDocumentIds: [],
   arrTaskIds: [],
   arrDashboardIds: [],
+  arrS3Keys: [],
   arrTechnicalReferenceNames: [],
 };
 
@@ -345,13 +350,31 @@ const deleteCollectionsData = async (db) => {
   await deleteMany(db, PRIMARY.AGGREGATE_REPORT_METADATA, aggregateReportMetadataQuery);
 };
 
+const getDocumentLogList = async (db, query) => {
+  const documentLogList = await db
+    .collection(WORKHALL_DOCUMENT_ENGINE.DOCUMENT_LOG)
+    .find(query)
+    .toArray();
+  return documentLogList;
+};
+
 const deleteCollectionDataFromWorkhallDocumentEngineDB = async (client) => {
   const dbWHDocumentEngine = await getDB(client, BACKEND_DB.WORKHALL_DOCUMENT_ENGINE);
 
-  // Delete Many document_log
   const documentLogQuery = {
     document_id: { $in: objIdsAndTechRefName.arrDocumentIds },
   };
+
+  // Get document_log list
+  const documentLogList = await getDocumentLogList(dbWHDocumentEngine, documentLogQuery);
+  objIdsAndTechRefName.arrS3Keys = documentLogList.map((item) => item.s3_key);
+
+  // Delete S3 Objects
+  objIdsAndTechRefName.arrS3Keys.forEach(async (s3Key) => {
+    await s3Utils.deleteObject(devDmsBucketName, s3Key);
+  });
+
+  // Delete Many document_log
   await deleteMany(dbWHDocumentEngine, WORKHALL_DOCUMENT_ENGINE.DOCUMENT_LOG, documentLogQuery);
 }
 
