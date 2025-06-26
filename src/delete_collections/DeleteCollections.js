@@ -1,12 +1,13 @@
+import chalk from 'chalk';
+import utils from "lodash";
 import { closeClient, getClient, getDB } from "../core/Client.js";
 import { COLLECTIONS } from "../core/collections/Collections.strings.js";
 import { BACKEND_DB } from "../core/backend_db/BackendDB.strings.js";
-import utils from "lodash";
 import { s3Utils } from "../core/aws/S3Utils.js";
 
 const { PRIMARY, WORKHALL_DOCUMENT_ENGINE, SCHEDULER } = COLLECTIONS;
 
-const devDmsBucketName = 'wh-dev-dms';
+const devDmsBucketName = "wh-dev-dms";
 // const testDmsBucketName = 'wh-test-dms';
 
 // We have to put the all UUID's
@@ -78,9 +79,7 @@ const getFlowIdAndTechnicalReferenceNameListFromFlowMetaData = (
 };
 
 const getFlowMetaDataList = async (db) => {
-  const dbCollectionFlowMetaData = await db.collection(
-    PRIMARY.FLOW_METADATA
-  );
+  const dbCollectionFlowMetaData = await db.collection(PRIMARY.FLOW_METADATA);
   const dbCollectionFlowMetaDataData = await dbCollectionFlowMetaData
     .find({
       flow_uuid: { $nin: objUuids.arrFlowUuids },
@@ -97,9 +96,7 @@ const getInstanceIds = (instanceMetaData) => {
 };
 
 const getInstanceMetadataList = async (db, query) => {
-  const dbCollectionInstanceMetadata = await db.collection(
-    PRIMARY.INSTANCES
-  );
+  const dbCollectionInstanceMetadata = await db.collection(PRIMARY.INSTANCES);
   const dbCollectionInstanceMetadataData = await dbCollectionInstanceMetadata
     .find(query)
     .toArray();
@@ -126,9 +123,7 @@ const getDashboardMetadataList = async (db, query) => {
 };
 
 const getSchedulerLogList = async (db, schedulerQuery) => {
-  const dbCollectionSchedulerLog = await db.collection(
-    PRIMARY.SCHEDULER_LOG
-  );
+  const dbCollectionSchedulerLog = await db.collection(PRIMARY.SCHEDULER_LOG);
   const dbCollectionSchedulerLogData = await dbCollectionSchedulerLog
     .find(schedulerQuery)
     .toArray();
@@ -136,9 +131,7 @@ const getSchedulerLogList = async (db, schedulerQuery) => {
 };
 
 const getTaskMetaDataList = async (db, query) => {
-  const dbCollectionTaskMetadata = await db.collection(
-    PRIMARY.TASK_METADATA
-  );
+  const dbCollectionTaskMetadata = await db.collection(PRIMARY.TASK_METADATA);
   const dbCollectionTaskMetadataData = await dbCollectionTaskMetadata
     .find(query)
     .toArray();
@@ -166,7 +159,7 @@ const deleteCollectionsFromObjIdsAndTechRefName = async (db) => {
     async (collectionName) => {
       const dbCollectionData = await dropCollection(db, collectionName);
       if (dbCollectionData) {
-        console.log("collection dropped -> ", collectionName);
+        console.log(`\u2714 ${chalk.gray('collection dropped - ')}${chalk.redBright.strikethrough.bold(collectionName)}`);
       }
     }
   );
@@ -178,7 +171,7 @@ const deleteMany = async (db, collectionName, query) => {
     .deleteMany(query);
   if (dbCollectionData.acknowledged) {
     console.log(
-      `${collectionName} deleted counts = `,
+      `\u2714 ${chalk.whiteBright.bold(collectionName)} ${chalk.gray('deleted counts = ')}`,
       dbCollectionData.deletedCount
     );
   }
@@ -347,7 +340,11 @@ const deleteCollectionsData = async (db) => {
   const aggregateReportMetadataQuery = {
     report_uuid: { $nin: objUuids.arrReportUuids },
   };
-  await deleteMany(db, PRIMARY.AGGREGATE_REPORT_METADATA, aggregateReportMetadataQuery);
+  await deleteMany(
+    db,
+    PRIMARY.AGGREGATE_REPORT_METADATA,
+    aggregateReportMetadataQuery
+  );
 };
 
 const getDocumentLogList = async (db, query) => {
@@ -359,14 +356,20 @@ const getDocumentLogList = async (db, query) => {
 };
 
 const deleteCollectionDataFromWorkhallDocumentEngineDB = async (client) => {
-  const dbWHDocumentEngine = await getDB(client, BACKEND_DB.WORKHALL_DOCUMENT_ENGINE);
+  const dbWHDocumentEngine = await getDB(
+    client,
+    BACKEND_DB.WORKHALL_DOCUMENT_ENGINE
+  );
 
   const documentLogQuery = {
     document_id: { $in: objIdsAndTechRefName.arrDocumentIds },
   };
 
   // Get document_log list
-  const documentLogList = await getDocumentLogList(dbWHDocumentEngine, documentLogQuery);
+  const documentLogList = await getDocumentLogList(
+    dbWHDocumentEngine,
+    documentLogQuery
+  );
   objIdsAndTechRefName.arrS3Keys = documentLogList.map((item) => item.s3_key);
 
   // Delete S3 Objects
@@ -375,8 +378,12 @@ const deleteCollectionDataFromWorkhallDocumentEngineDB = async (client) => {
   });
 
   // Delete Many document_log
-  await deleteMany(dbWHDocumentEngine, WORKHALL_DOCUMENT_ENGINE.DOCUMENT_LOG, documentLogQuery);
-}
+  await deleteMany(
+    dbWHDocumentEngine,
+    WORKHALL_DOCUMENT_ENGINE.DOCUMENT_LOG,
+    documentLogQuery
+  );
+};
 
 const deleteCollectionDataFromSchedulerDB = async (client) => {
   const dbScheduler = await getDB(client, BACKEND_DB.SCHEDULER);
@@ -390,7 +397,7 @@ const deleteCollectionDataFromSchedulerDB = async (client) => {
 
   // Delete Many recursive_jobs
   await deleteMany(dbScheduler, SCHEDULER.RECURSIVE_JOBS, query);
-}
+};
 
 const deleteCollections = async () => {
   try {

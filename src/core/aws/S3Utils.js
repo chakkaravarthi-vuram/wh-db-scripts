@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
+import chalk from 'chalk';
 
 const s3Utils = {
   deleteObject: async (bucketName, key) => {
@@ -14,14 +15,10 @@ const s3Utils = {
 
     try {
       const data = await s3Client.send(command);
-      console.log(
-        `Object deleted successfully from ${bucketName}: ${key} \n ${JSON.stringify(
-          data
-        )}`
-      );
+      console.log(`\u2714 ${chalk.gray('Object deleted successfully from')} ${chalk.blue.bold(bucketName)} : ${chalk.red.strikethrough(key)}`);
       return data;
     } catch (error) {
-      console.error(`Error deleting object from ${bucketName}: ${key}`, error);
+      console.error(`❌ Error deleting object from ${bucketName}: ${key}`, error);
     }
   },
   getObject: async (bucketName, key) => {
