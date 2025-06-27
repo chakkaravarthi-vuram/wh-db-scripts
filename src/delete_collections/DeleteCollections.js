@@ -5,18 +5,26 @@ import { COLLECTIONS } from "../core/collections/Collections.strings.js";
 import { BACKEND_DB } from "../core/backend_db/BackendDB.strings.js";
 import { s3Utils } from "../core/aws/S3Utils.js";
 import { s3BucketName } from "../core/aws/S3.strings.js";
+import { OBJ_UUIDS } from "./Data.js"
 
 const { PRIMARY, WORKHALL_DOCUMENT_ENGINE, SCHEDULER } = COLLECTIONS;
 
 // We have to put the all UUID's
+// const objUuids = {
+//   arrDataListUuids: [
+//     "407461af-611b-4dfd-a748-bab24d679030",
+//     "dcb8fc3a-a614-4f41-81a2-1a8c10b7a782",
+//   ],
+//   arrFlowUuids: ["0e2cb1ba-6635-43a2-be82-8d9c7e1bb031"],
+//   arrAppUuids: ["122a304f-21c9-4c63-a157-c1c4fbe5ef16"],
+//   arrReportUuids: ["b2a09537-2175-4ad8-bed8-ab38f5aed6dc"],
+// };
+
 const objUuids = {
-  arrDataListUuids: [
-    "407461af-611b-4dfd-a748-bab24d679030",
-    "dcb8fc3a-a614-4f41-81a2-1a8c10b7a782",
-  ],
-  arrFlowUuids: ["0e2cb1ba-6635-43a2-be82-8d9c7e1bb031"],
-  arrAppUuids: ["122a304f-21c9-4c63-a157-c1c4fbe5ef16"],
-  arrReportUuids: ["b2a09537-2175-4ad8-bed8-ab38f5aed6dc"],
+  arrDataListUuids: OBJ_UUIDS.arrDatalistUUID,
+  arrFlowUuids: OBJ_UUIDS.arrFlowUUID,
+  arrAppUuids: OBJ_UUIDS.arrAppUUID,
+  arrReportUuids: OBJ_UUIDS.arrReportUUID,
 };
 
 const objIdsAndTechRefName = {
@@ -191,25 +199,26 @@ const deleteCollectionsData = async (db) => {
   const flowMetaData = await getFlowMetaDataList(db);
   await getFlowIdAndTechnicalReferenceNameListFromFlowMetaData(flowMetaData);
 
-  // instance
-  const instanceMetadata = await getInstanceMetadataList(db);
-  await getInstanceIds(instanceMetadata);
-
-  // dashboard_metadata
-  const dashboardMetadata = await getDashboardMetadataList(db);
-  await getDashboardIds(dashboardMetadata);
-
   const query = {
     $and: [
       { data_list_uuid: { $nin: objUuids.arrDataListUuids } },
       { flow_uuid: { $nin: objUuids.arrFlowUuids } },
     ],
   };
-  let docUuids = [];
-  docUuids.push(objUuids.arrDataListUuids);
-  docUuids.push(objUuids.arrFlowUuids);
-  // docUuids.push(objUuids.arrTaskMetadataUuids);
-  docUuids = docUuids.flat(Infinity);
+
+  // instance
+  const instanceMetadata = await getInstanceMetadataList(db, query);
+  await getInstanceIds(instanceMetadata);
+
+  // dashboard_metadata
+  const dashboardMetadata = await getDashboardMetadataList(db, query);
+  await getDashboardIds(dashboardMetadata);
+
+  let UUIDs = [];
+  UUIDs.push(objUuids.arrDataListUuids);
+  UUIDs.push(objUuids.arrFlowUuids);
+  // UUIDs.push(objUuids.arrTaskMetadataUuids);
+  UUIDs = UUIDs.flat(Infinity);
 
   // Delete collections
   await deleteCollectionsFromObjIdsAndTechRefName(db);
@@ -221,7 +230,7 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many field_master
   const fieldMasterQuery = {
-    context_uuid: { $nin: docUuids },
+    context_uuid: { $nin: UUIDs },
   };
   await deleteMany(db, PRIMARY.FIELD_MASTER, fieldMasterQuery);
 
@@ -280,7 +289,7 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many data_access_log
   const dataAccessLogQuery = {
-    data_access_log_uuid: { $nin: docUuids },
+    data_access_log_uuid: { $nin: UUIDs },
   };
   await deleteMany(db, PRIMARY.DATA_ACCESS_LOG, dataAccessLogQuery);
 
@@ -292,7 +301,7 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many auto_sequence
   const autoSequenceQuery = {
-    $and: [{ identifier: { $nin: docUuids } }],
+    $and: [{ identifier: { $nin: UUIDs } }],
   };
   await deleteMany(db, PRIMARY.AUTO_SEQUENCE, autoSequenceQuery);
 
@@ -327,7 +336,7 @@ const deleteCollectionsData = async (db) => {
   // Delete Many documentQuery
   const documentQuery = {
     $and: [
-      { entity_uuid: { $nin: docUuids } },
+      { entity_uuid: { $nin: UUIDs } },
       // { entity_id: { $in: objIdsAndTechRefName.arrTaskIds } },
     ],
   };
@@ -418,7 +427,7 @@ const deleteCollections = async () => {
   try {
     const client = await getClient();
 
-    const db = await getDB(client, BACKEND_DB.NIRVANA);
+    const db = await getDB(client, BACKEND_DB.INTERNAL);
     await deleteCollectionsData(db);
 
     await deleteCollectionDataFromWorkhallDocumentEngineDB(client);
