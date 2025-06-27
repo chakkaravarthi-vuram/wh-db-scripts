@@ -1,8 +1,8 @@
 import { s3Utils } from "../core/aws/S3Utils.js";
-const devDmsBucketName = 'wh-dev-dms';
-// const testDmsBucketName = 'wh-test-dms';
+import { s3BucketName } from "../core/aws/S3.strings.js";
+
 const getListOfObjects = async () => {
-    const objects = await s3Utils.listObjects(devDmsBucketName);
+    const objects = await s3Utils.listObjects(s3BucketName.WH_DEV_DMS);
     console.log(`Objects fetched successfully from \n ${JSON.stringify(objects)}`);
     return objects;
 }
