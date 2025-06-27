@@ -29,6 +29,9 @@ const COLLECTIONS = {
     TASK_METADATA: "task_metadata",
     FLOW_TRACKER: "flow_tracker",
     AGGREGATE_REPORT_METADATA: "aggregate_report_metadata",
+    APPS: "apps",
+    PAGES: "pages",
+    COMPONENTS: "components",
   },
   WORKHALL_DOCUMENT_ENGINE: {
     DOCUMENT_LOG: "document_log",

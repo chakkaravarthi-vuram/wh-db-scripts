@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import chalk from "chalk";
 import utils from "lodash";
 import { closeClient, getClient, getDB } from "../core/Client.js";
 import { COLLECTIONS } from "../core/collections/Collections.strings.js";
@@ -15,6 +15,7 @@ const objUuids = {
     "dcb8fc3a-a614-4f41-81a2-1a8c10b7a782",
   ],
   arrFlowUuids: ["0e2cb1ba-6635-43a2-be82-8d9c7e1bb031"],
+  arrAppUuids: ["122a304f-21c9-4c63-a157-c1c4fbe5ef16"],
   arrReportUuids: ["b2a09537-2175-4ad8-bed8-ab38f5aed6dc"],
 };
 
@@ -157,7 +158,11 @@ const deleteCollectionsFromObjIdsAndTechRefName = async (db) => {
     async (collectionName) => {
       const dbCollectionData = await dropCollection(db, collectionName);
       if (dbCollectionData) {
-        console.log(`\u2714 ${chalk.gray('collection dropped - ')}${chalk.redBright.strikethrough.bold(collectionName)}`);
+        console.log(
+          `\u2714 ${chalk.gray(
+            "collection dropped - "
+          )}${chalk.redBright.strikethrough.bold(collectionName)}`
+        );
       }
     }
   );
@@ -169,7 +174,9 @@ const deleteMany = async (db, collectionName, query) => {
     .deleteMany(query);
   if (dbCollectionData.acknowledged) {
     console.log(
-      `\u2714 ${chalk.whiteBright.bold(collectionName)} ${chalk.gray('deleted counts = ')}`,
+      `\u2714 ${chalk.whiteBright.bold(collectionName)} ${chalk.gray(
+        "deleted counts = "
+      )}`,
       dbCollectionData.deletedCount
     );
   }
@@ -333,6 +340,16 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many document_metadata
   await deleteMany(db, PRIMARY.DOCUMENT_METADATA, documentQuery);
+
+  // Delete Many apps
+  const appsQuery = { app_uuid: { $nin: objUuids.arrAppUuids } };
+  await deleteMany(db, PRIMARY.APPS, appsQuery);
+
+  // Delete Many pages
+  await deleteMany(db, PRIMARY.PAGES, appsQuery);
+
+  // Delete Many components
+  await deleteMany(db, PRIMARY.COMPONENTS, appsQuery);
 
   // Delete Many aggregate_report_metadata
   const aggregateReportMetadataQuery = {
