@@ -5,7 +5,7 @@ import { COLLECTIONS } from "../core/collections/Collections.strings.js";
 import { BACKEND_DB } from "../core/backend_db/BackendDB.strings.js";
 import { s3Utils } from "../core/aws/S3Utils.js";
 import { s3BucketName } from "../core/aws/S3.strings.js";
-import { OBJ_UUIDS } from "./Data.js"
+import { OBJ_UUIDS } from "./Data.js";
 
 const { PRIMARY, WORKHALL_DOCUMENT_ENGINE, SCHEDULER } = COLLECTIONS;
 
@@ -155,6 +155,13 @@ const getDocumentMetadataList = async (db, documentQuery) => {
   return dbCollectionDocumentMetadataData;
 };
 
+const collectionExists = async (db, collectionName) => {
+  const collections = await db
+    .listCollections({ name: collectionName })
+    .toArray();
+  return collections.length > 0;
+};
+
 const dropCollection = async (db, collectionName) => {
   const dbCollection = await db.collection(collectionName);
   const dbCollectionData = await dbCollection.drop();
@@ -162,14 +169,28 @@ const dropCollection = async (db, collectionName) => {
 };
 
 const deleteCollectionsFromObjIdsAndTechRefName = async (db) => {
-  objIdsAndTechRefName.arrTechnicalReferenceNames.forEach(
-    async (collectionName) => {
-      const dbCollectionData = await dropCollection(db, collectionName);
-      if (dbCollectionData) {
+  let collectionDroppedCount = 0;
+  await objIdsAndTechRefName.arrTechnicalReferenceNames.forEach(
+    async (collectionName, index) => {
+      if (await collectionExists(db, collectionName)) {
+        collectionDroppedCount += 1;
+        const dbCollectionData = await dropCollection(db, collectionName);
+        if (dbCollectionData) {
+          console.log(
+            `\u2714 ${chalk.gray(
+              "collection dropped - "
+            )}${chalk.redBright.strikethrough.bold(collectionName)}`
+          );
+        }
+      }
+      if (
+        index ===
+        objIdsAndTechRefName.arrTechnicalReferenceNames.length - 1
+      ) {
         console.log(
-          `\u2714 ${chalk.gray(
-            "collection dropped - "
-          )}${chalk.redBright.strikethrough.bold(collectionName)}`
+          `\u2139 ${chalk.gray("collection dropped counts - ")}${chalk.yellowBright.bold(
+            collectionDroppedCount
+          )}`
         );
       }
     }
