@@ -3,7 +3,7 @@ const path = require('path');
 
 // Configuration
 const dbName = 'nirvana';
-const uri = "mongodb+srv://chak-dev-test:GihF7dK4u3XIar6q@wh-test-primary.kkhhd.mongodb.net"; // or your MongoDB URI
+const uri = "mongodb+srv://<userName>:<passkey>@wh-test-primary.kkhhd.mongodb.net"; // or your MongoDB URI
 const outputDir = path.join(__dirname, 'dbDump'); // where dump will be saved
 
 // Build the mongo dump command
