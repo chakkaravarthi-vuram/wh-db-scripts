@@ -399,7 +399,7 @@ const deleteCollectionDataFromSchedulerDB = async (client) => {
 
 const deleteCollections = async () => {
   try {
-    const client = await getClient(true); // false for server
+    const client = await getClient();
 
     const db = await getDB(client, BACKEND_DB.NIRVANA);
     await deleteCollectionsData(db);
