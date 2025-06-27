@@ -152,28 +152,21 @@ const dropCollection = async (db, collectionName) => {
 
 const deleteCollectionsFromObjIdsAndTechRefName = async (db) => {
   let collectionDroppedCount = 0;
+  const digitCount = String(objIdsAndTechRefName.arrTechnicalReferenceNames.length).length;
   await objIdsAndTechRefName.arrTechnicalReferenceNames.forEach(
-    async (collectionName, index) => {
+    async (collectionName) => {
       if (await collectionExists(db, collectionName)) {
-        collectionDroppedCount += 1;
         const dbCollectionData = await dropCollection(db, collectionName);
         if (dbCollectionData) {
+          collectionDroppedCount += 1;
           console.log(
             `\u2714 ${chalk.gray(
               "collection dropped - "
-            )}${chalk.redBright.strikethrough.bold(collectionName)}`
+            )}${utils.padStart(String(collectionDroppedCount), digitCount, '0')} ${chalk.redBright.strikethrough.bold(
+              collectionName
+            )}`
           );
         }
-      }
-      if (
-        index ===
-        objIdsAndTechRefName.arrTechnicalReferenceNames.length - 1
-      ) {
-        console.log(
-          `\u2139 ${chalk.gray(
-            "collection dropped counts - "
-          )}${chalk.yellowBright.bold(collectionDroppedCount)}`
-        );
       }
     }
   );
