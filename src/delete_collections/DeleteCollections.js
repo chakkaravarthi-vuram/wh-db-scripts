@@ -9,24 +9,6 @@ import { OBJ_UUIDS } from "./Data.js";
 
 const { PRIMARY, WORKHALL_DOCUMENT_ENGINE, SCHEDULER } = COLLECTIONS;
 
-// We have to put the all UUID's
-// const objUuids = {
-//   arrDataListUuids: [
-//     "407461af-611b-4dfd-a748-bab24d679030",
-//     "dcb8fc3a-a614-4f41-81a2-1a8c10b7a782",
-//   ],
-//   arrFlowUuids: ["0e2cb1ba-6635-43a2-be82-8d9c7e1bb031"],
-//   arrAppUuids: ["122a304f-21c9-4c63-a157-c1c4fbe5ef16"],
-//   arrReportUuids: ["b2a09537-2175-4ad8-bed8-ab38f5aed6dc"],
-// };
-
-const objUuids = {
-  arrDataListUuids: OBJ_UUIDS.arrDatalistUUID,
-  arrFlowUuids: OBJ_UUIDS.arrFlowUUID,
-  arrAppUuids: OBJ_UUIDS.arrAppUUID,
-  arrReportUuids: OBJ_UUIDS.arrReportUUID,
-};
-
 const objIdsAndTechRefName = {
   arrFlowIds: [],
   arrDatalistIds: [],
@@ -60,7 +42,7 @@ const getDatalist = async (db) => {
   const dbCollectionDatalist = await db.collection(PRIMARY.DATA_LIST);
   const dbCollectionDatalistData = await dbCollectionDatalist
     .find({
-      data_list_uuid: { $nin: objUuids.arrDataListUuids },
+      data_list_uuid: { $nin: OBJ_UUIDS.arrDatalistUUID },
     })
     .toArray();
   return dbCollectionDatalistData;
@@ -89,7 +71,7 @@ const getFlowMetaDataList = async (db) => {
   const dbCollectionFlowMetaData = await db.collection(PRIMARY.FLOW_METADATA);
   const dbCollectionFlowMetaDataData = await dbCollectionFlowMetaData
     .find({
-      flow_uuid: { $nin: objUuids.arrFlowUuids },
+      flow_uuid: { $nin: OBJ_UUIDS.arrFlowUUID },
     })
     .toArray();
   return dbCollectionFlowMetaDataData;
@@ -188,9 +170,9 @@ const deleteCollectionsFromObjIdsAndTechRefName = async (db) => {
         objIdsAndTechRefName.arrTechnicalReferenceNames.length - 1
       ) {
         console.log(
-          `\u2139 ${chalk.gray("collection dropped counts - ")}${chalk.yellowBright.bold(
-            collectionDroppedCount
-          )}`
+          `\u2139 ${chalk.gray(
+            "collection dropped counts - "
+          )}${chalk.yellowBright.bold(collectionDroppedCount)}`
         );
       }
     }
@@ -222,8 +204,8 @@ const deleteCollectionsData = async (db) => {
 
   const query = {
     $and: [
-      { data_list_uuid: { $nin: objUuids.arrDataListUuids } },
-      { flow_uuid: { $nin: objUuids.arrFlowUuids } },
+      { data_list_uuid: { $nin: OBJ_UUIDS.arrDatalistUUID } },
+      { flow_uuid: { $nin: OBJ_UUIDS.arrFlowUUID } },
     ],
   };
 
@@ -236,9 +218,9 @@ const deleteCollectionsData = async (db) => {
   await getDashboardIds(dashboardMetadata);
 
   let UUIDs = [];
-  UUIDs.push(objUuids.arrDataListUuids);
-  UUIDs.push(objUuids.arrFlowUuids);
-  // UUIDs.push(objUuids.arrTaskMetadataUuids);
+  UUIDs.push(OBJ_UUIDS.arrDatalistUUID);
+  UUIDs.push(OBJ_UUIDS.arrFlowUUID);
+  // UUIDs.push(OBJ_UUIDS.arrTaskMetadataUuids);
   UUIDs = UUIDs.flat(Infinity);
 
   // Delete collections
@@ -287,8 +269,8 @@ const deleteCollectionsData = async (db) => {
 
   const schedulerQuery = {
     $and: [
-      { "schedule_data.flow_uuid": { $nin: objUuids.arrFlowUuids } },
-      { "schedule_data.data_list_uuid": { $nin: objUuids.arrDataListUuids } },
+      { "schedule_data.flow_uuid": { $nin: OBJ_UUIDS.arrFlowUUID } },
+      { "schedule_data.data_list_uuid": { $nin: OBJ_UUIDS.arrDatalistUUID } },
       // {
       //   "schedule_data.instance_id": {
       //     $in: objIdsAndTechRefName.arrInstanceIds,
@@ -372,7 +354,7 @@ const deleteCollectionsData = async (db) => {
   await deleteMany(db, PRIMARY.DOCUMENT_METADATA, documentQuery);
 
   // Delete Many apps
-  const appsQuery = { app_uuid: { $nin: objUuids.arrAppUuids } };
+  const appsQuery = { app_uuid: { $nin: OBJ_UUIDS.arrAppUUID } };
   await deleteMany(db, PRIMARY.APPS, appsQuery);
 
   // Delete Many pages
@@ -383,7 +365,7 @@ const deleteCollectionsData = async (db) => {
 
   // Delete Many aggregate_report_metadata
   const aggregateReportMetadataQuery = {
-    report_uuid: { $nin: objUuids.arrReportUuids },
+    report_uuid: { $nin: OBJ_UUIDS.arrReportUUID },
   };
   await deleteMany(
     db,
